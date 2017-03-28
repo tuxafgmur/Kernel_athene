@@ -142,7 +142,7 @@ static void esdfs_d_release(struct dentry *dentry)
 	/* release and reset the lower paths */
 	esdfs_put_reset_lower_paths(dentry);
 	esdfs_release_lower_parent(dentry);
-	free_dentry_private_data(dentry);
+	free_dentry_private_sdata(dentry);
 	return;
 }
 

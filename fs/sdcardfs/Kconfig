@@ -1,9 +1,13 @@
 config SDCARD_FS
-	tristate "sdcard file system"
+	tristate "Sdcard file system to emulate Android 'SD card"
 	depends on CONFIGFS_FS
 	default n
 	help
-	  Sdcardfs is based on Wrapfs file system.
+  	  Sdcardfs is a wrapfs-based file system, designed to implement the
+	  Android "sdcard" FUSE-backed file system from within the kernel.
+
+	  It is assumed that only one of both (Sdcardfs nor Esdfs) emulation 
+	  SD card file systems is to be selected.
 
 config SDCARD_FS_FADV_NOACTIVE
 	bool "sdcardfs fadvise noactive support"

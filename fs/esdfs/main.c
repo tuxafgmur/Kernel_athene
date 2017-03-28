@@ -277,7 +277,7 @@ static int esdfs_read_super(struct super_block *sb, const char *dev_name,
 
 	/* link the upper and lower dentries */
 	sb->s_root->d_fsdata = NULL;
-	err = new_dentry_private_data(sb->s_root);
+	err = new_dentry_private_sdata(sb->s_root);
 	if (err)
 		goto out_freeroot;
 
