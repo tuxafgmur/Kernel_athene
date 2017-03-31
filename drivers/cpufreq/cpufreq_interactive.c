@@ -13,7 +13,6 @@
  * GNU General Public License for more details.
  *
  * Author: Mike Chan (mike@android.com)
- *
  */
 
 #include <linux/cpu.h>
@@ -33,13 +32,10 @@
 #include <linux/kernel_stat.h>
 #include <asm/cputime.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/cpufreq_interactive.h>
-
 struct cpufreq_interactive_cpuinfo {
 	struct timer_list cpu_timer;
 	struct timer_list cpu_slack_timer;
-	spinlock_t load_lock; /* protects the next 4 fields */
+	spinlock_t load_lock;                   /* protects the next 4 fields */
 	u64 time_in_idle;
 	u64 time_in_idle_timestamp;
 	u64 cputime_speedadj;
@@ -47,15 +43,15 @@ struct cpufreq_interactive_cpuinfo {
 	u64 last_evaluated_jiffy;
 	struct cpufreq_policy *policy;
 	struct cpufreq_frequency_table *freq_table;
-	spinlock_t target_freq_lock; /*protects target freq */
+	spinlock_t target_freq_lock;            /*protects target freq */
 	unsigned int target_freq;
 	unsigned int floor_freq;
 	unsigned int max_freq;
 	unsigned int min_freq;
 	u64 floor_validate_time;
-	u64 local_fvtime; /* per-cpu floor_validate_time */
-	u64 hispeed_validate_time; /* cluster hispeed_validate_time */
-	u64 local_hvtime; /* per-cpu hispeed_validate_time */
+	u64 local_fvtime;                       /* per-cpu floor_validate_time */
+	u64 hispeed_validate_time;              /* cluster hispeed_validate_time */
+	u64 local_hvtime;                       /* per-cpu hispeed_validate_time */
 	u64 max_freq_hyst_start_time;
 	struct rw_semaphore enable_sem;
 	bool reject_notification;
@@ -97,8 +93,8 @@ struct cpufreq_interactive_tunables {
 	unsigned int *target_loads;
 	int ntarget_loads;
 	/*
-	 * The minimum amount of time to spend at a frequency before we can ramp
-	 * down.
+	 * The minimum amount of time to spend at a frequency
+     * before we can ramp down.
 	 */
 #define DEFAULT_MIN_SAMPLE_TIME (80 * USEC_PER_MSEC)
 	unsigned long min_sample_time;
@@ -107,8 +103,8 @@ struct cpufreq_interactive_tunables {
 	 */
 	unsigned long timer_rate;
 	/*
-	 * Wait this long before raising speed above hispeed, by default a
-	 * single timer interval.
+	 * Wait this long before raising speed above hispeed,
+     * by default a single timer interval.
 	 */
 	spinlock_t above_hispeed_delay_lock;
 	unsigned int *above_hispeed_delay;
@@ -140,8 +136,8 @@ struct cpufreq_interactive_tunables {
 	bool align_windows;
 
 	/*
-	 * Stay at max freq for at least max_freq_hysteresis before dropping
-	 * frequency.
+	 * Stay at max freq for at least max_freq_hysteresis
+     * before dropping frequency.
 	 */
 	unsigned int max_freq_hysteresis;
 };
@@ -478,9 +474,6 @@ static void __cpufreq_interactive_timer(unsigned long data, bool is_notif)
 	    new_freq > pcpu->policy->cur &&
 	    now - pcpu->hispeed_validate_time <
 	    freq_to_above_hispeed_delay(tunables, pcpu->policy->cur)) {
-		trace_cpufreq_interactive_notyet(
-			data, cpu_load, pcpu->target_freq,
-			pcpu->policy->cur, new_freq);
 		spin_unlock_irqrestore(&pcpu->target_freq_lock, flags);
 		goto rearm;
 	}
@@ -499,8 +492,6 @@ static void __cpufreq_interactive_timer(unsigned long data, bool is_notif)
 	if (!is_notif && new_freq < pcpu->target_freq &&
 	    now - pcpu->max_freq_hyst_start_time <
 	    tunables->max_freq_hysteresis) {
-		trace_cpufreq_interactive_notyet(data, cpu_load,
-			pcpu->target_freq, pcpu->policy->cur, new_freq);
 		spin_unlock_irqrestore(&pcpu->target_freq_lock, flags);
 		goto rearm;
 	}
@@ -513,9 +504,6 @@ static void __cpufreq_interactive_timer(unsigned long data, bool is_notif)
 	if (!is_notif && new_freq < pcpu->floor_freq &&
 	    pcpu->target_freq >= pcpu->policy->cur) {
 		if (now - max_fvtime < tunables->min_sample_time) {
-			trace_cpufreq_interactive_notyet(
-				data, cpu_load, pcpu->target_freq,
-				pcpu->policy->cur, new_freq);
 			spin_unlock_irqrestore(&pcpu->target_freq_lock, flags);
 			goto rearm;
 		}
@@ -540,15 +528,9 @@ static void __cpufreq_interactive_timer(unsigned long data, bool is_notif)
 		pcpu->max_freq_hyst_start_time = now;
 
 	if (pcpu->target_freq == new_freq) {
-		trace_cpufreq_interactive_already(
-			data, cpu_load, pcpu->target_freq,
-			pcpu->policy->cur, new_freq);
 		spin_unlock_irqrestore(&pcpu->target_freq_lock, flags);
 		goto rearm;
 	}
-
-	trace_cpufreq_interactive_target(data, cpu_load, pcpu->target_freq,
-					 pcpu->policy->cur, new_freq);
 
 	pcpu->target_freq = new_freq;
 	spin_unlock_irqrestore(&pcpu->target_freq_lock, flags);
@@ -661,9 +643,6 @@ static int cpufreq_interactive_speedchange_task(void *data)
 					pjcpu->hispeed_validate_time = hvt;
 				}
 			}
-			trace_cpufreq_interactive_setspeed(cpu,
-						     pcpu->target_freq,
-						     pcpu->policy->cur);
 
 			up_read(&pcpu->enable_sem);
 		}
@@ -738,7 +717,6 @@ static int load_change_callback(struct notifier_block *nb, unsigned long val,
 		return 0;
 	}
 
-	trace_cpufreq_interactive_load_change(cpu);
 	del_timer(&pcpu->cpu_timer);
 	del_timer(&pcpu->cpu_slack_timer);
 	__cpufreq_interactive_timer(cpu, true);
@@ -1019,9 +997,6 @@ static ssize_t store_timer_rate(struct cpufreq_interactive_tunables *tunables,
 		return ret;
 
 	val_round = jiffies_to_usecs(usecs_to_jiffies(val));
-	if (val != val_round)
-		pr_warn("timer_rate not aligned to jiffy. Rounded up to %lu\n",
-			val_round);
 	tunables->timer_rate = val_round;
 
 	if (!tunables->use_sched_load)
@@ -1076,12 +1051,10 @@ static ssize_t store_boost(struct cpufreq_interactive_tunables *tunables,
 	tunables->boost_val = val;
 
 	if (tunables->boost_val) {
-		trace_cpufreq_interactive_boost("on");
 		if (!tunables->boosted)
 			cpufreq_interactive_boost(tunables);
 	} else {
 		tunables->boostpulse_endtime = ktime_to_us(ktime_get());
-		trace_cpufreq_interactive_unboost("off");
 	}
 
 	return count;
@@ -1099,7 +1072,6 @@ static ssize_t store_boostpulse(struct cpufreq_interactive_tunables *tunables,
 
 	tunables->boostpulse_endtime = ktime_to_us(ktime_get()) +
 		tunables->boostpulse_duration_val;
-	trace_cpufreq_interactive_boost("pulse");
 	if (!tunables->boosted)
 		cpufreq_interactive_boost(tunables);
 	return count;
