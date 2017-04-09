@@ -1283,7 +1283,7 @@ static int32_t msm_cci_init(struct v4l2_subdev *sd,
 	cci_dev->reg_ptr = regulator_get(&(cci_dev->pdev->dev),
 					 "qcom,gdscr-vdd");
 	if (IS_ERR_OR_NULL(cci_dev->reg_ptr)) {
-		pr_err(" %s: Failed in getting TOP gdscr regulator handle",
+		pr_debug(" %s: Failed in getting TOP gdscr regulator handle",
 			__func__);
 	} else {
 		rc = regulator_enable(cci_dev->reg_ptr);
@@ -1313,7 +1313,7 @@ static int32_t msm_cci_init(struct v4l2_subdev *sd,
 	enable_irq(cci_dev->irq->start);
 	cci_dev->hw_version = msm_camera_io_r_mb(cci_dev->base +
 		CCI_HW_VERSION_ADDR);
-	pr_info("%s:%d: hw_version = 0x%x\n", __func__, __LINE__,
+	pr_debug("%s:%d: hw_version = 0x%x\n", __func__, __LINE__,
 		cci_dev->hw_version);
 	cci_dev->payload_size =
 			MSM_CCI_WRITE_DATA_PAYLOAD_SIZE_10;

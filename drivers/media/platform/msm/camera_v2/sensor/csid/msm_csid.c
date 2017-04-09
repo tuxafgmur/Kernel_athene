@@ -42,7 +42,7 @@
 #define MSM_CSID_DRV_NAME                    "msm_csid"
 
 #define DBG_CSID 0
-#define SOF_DEBUG_ENABLE 1
+#define SOF_DEBUG_ENABLE 0
 #define SOF_DEBUG_DISABLE 0
 
 #define TRUE   1
@@ -334,9 +334,10 @@ static int msm_csid_init(struct csid_device *csid_dev, uint32_t *csid_version)
 		rc = -ENOMEM;
 		return rc;
 	}
-
-	pr_info("%s: CSID_VERSION = 0x%x\n", __func__,
+#if 0
+	pr_debug("%s: CSID_VERSION = 0x%x\n", __func__,
 		csid_dev->ctrl_reg->csid_reg.csid_version);
+#endif
 	/* power up */
 	if (csid_dev->ctrl_reg->csid_reg.csid_version < CSID_VERSION_V22) {
 		rc = msm_camera_config_vreg(&csid_dev->pdev->dev,
@@ -368,7 +369,7 @@ static int msm_csid_init(struct csid_device *csid_dev, uint32_t *csid_version)
 	csid_dev->reg_ptr = regulator_get(&(csid_dev->pdev->dev),
 					 "qcom,gdscr-vdd");
 	if (IS_ERR_OR_NULL(csid_dev->reg_ptr)) {
-		pr_err(" %s: Failed in getting TOP gdscr regulator handle",
+		pr_debug(" %s: Failed in getting TOP gdscr regulator handle",
 			__func__);
 	} else {
 		rc = regulator_enable(csid_dev->reg_ptr);

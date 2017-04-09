@@ -737,7 +737,7 @@ int msm_isp_cfg_set_stats_ab(struct vfe_device *vfe_dev, void *arg)
 	stats_ab = arg;
 	if ((stats_ab->stats_ab  == (uint64_t) -1) ||
 		(stats_ab->stats_ab  == 0)) {
-		pr_err("%s: STATS AB value is 0/-1, set to MSM_ISP_MIN_AB\n",
+		pr_debug("%s: STATS AB value is 0/-1, set to MSM_ISP_MIN_AB\n",
 			__func__);
 		stats_ab->stats_ab = MSM_ISP_MIN_AB;
 	}
